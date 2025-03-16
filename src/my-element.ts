@@ -1,5 +1,8 @@
-import { LitElement, css, html } from 'lit'
+import { css, html } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
+import { ReduxLitElement } from './redux-lit-element';
+import { RootState } from './store/store';
+import { increment, decrement, selectCount } from './store/slices/counterSlice';
 import litLogo from '/lit.svg'
 import viteLogo from '/vite.svg'
 
@@ -10,7 +13,7 @@ import viteLogo from '/vite.svg'
  * @csspart button - The button
  */
 @customElement('my-element')
-export class MyElement extends LitElement {
+export class MyElement extends ReduxLitElement {
   /**
    * Copy for the read the docs hint.
    */
@@ -20,8 +23,16 @@ export class MyElement extends LitElement {
   /**
    * The number of times the button has been clicked.
    */
-  @property({ type: Number })
+  @property()
   count = 0
+
+  /**
+   * Called when Redux state changes
+   */
+  protected stateChanged(state: RootState): void {
+    // Update local property from Redux store
+    this.count = selectCount(state);
+  }
 
   render() {
     return html`
@@ -35,16 +46,24 @@ export class MyElement extends LitElement {
       </div>
       <slot></slot>
       <div class="card">
-        <button @click=${this._onClick} part="button">
-          count is ${this.count}
+        <button @click=${this._onIncrement} part="button">
+          Increment
         </button>
+        <button @click=${this._onDecrement} part="button">
+          Decrement
+        </button>
+        <p class="current-count">Redux count is ${this.count}</p>
       </div>
       <p class="read-the-docs">${this.docsHint}</p>
     `
   }
 
-  private _onClick() {
-    this.count++
+  private _onIncrement() {
+    this.store.dispatch(increment());
+  }
+
+  private _onDecrement() {
+    this.store.dispatch(decrement());
   }
 
   static styles = css`
@@ -53,6 +72,10 @@ export class MyElement extends LitElement {
       margin: 0 auto;
       padding: 2rem;
       text-align: center;
+    }
+
+    .current-count {
+      margin-top: 20px;
     }
 
     .logo {
@@ -100,6 +123,7 @@ export class MyElement extends LitElement {
       background-color: #1a1a1a;
       cursor: pointer;
       transition: border-color 0.25s;
+      margin: 0 0.5em;
     }
     button:hover {
       border-color: #646cff;
